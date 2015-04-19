@@ -42,7 +42,7 @@ error_reporting(E_ERROR);
       </div>
     </nav>
 
-    <div class="container">
+    <div class="container" style="width:1500px">
 	
 	<div class="top-slider">
 <?php
@@ -55,15 +55,20 @@ $handle = opendir(dirname(realpath(__FILE__)).'/music-sheet/');
 ?>
 	</div>
 		
+	<button class="btn btn-primary" id="RotatePlus"><i class="icon-user icon-white"></i>Rotate (+0.1)</button>
+	<button class="btn btn-primary" id="RotateMinus"><i class="icon-user icon-white"></i>Rotate (-0.1)</button>
+
 	<button class="btn btn-primary" id="MakeBW"><i class="icon-user icon-white"></i>Make B/W</button>
+	<button class="btn btn-primary" id="MakeBWCon"><i class="icon-user icon-white"></i>Make B/W w/Contrast</button>
 	
-	<button class="btn btn-primary" id="FindRows"><i class="icon-user icon-white"></i>Show Rows</button>
+	<button class="btn btn-primary" id="ShowDensity"><i class="icon-user icon-white"></i>Show Density</button>
 
-	<button class="btn btn-primary" id="ClearRows"><i class="icon-user icon-white"></i>Clear Rows</button>
+	<button class="btn btn-primary" id="FindHorizontal"><i class="icon-user icon-white"></i>Find Horizontal Lines</button>
 	
-<!-- HTML Code -->
 
-<div style="width:1000px; height:500px; overflow:auto; border: 1px solid #555; margin-top:10px;">
-	<canvas id="area" width="500" height="300">
-	</canvas>
-<div>
+<div style="width:1500px;">
+	<div style="width:1500px; height:500px; overflow:auto; border: 1px solid #555; margin-top:10px; display: inline-block;">
+		<canvas id="area" width="500" height="300"></canvas>
+	</div>
+
+</div>
