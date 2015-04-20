@@ -61,9 +61,15 @@ $handle = opendir(dirname(realpath(__FILE__)).'/music-sheet/');
 	<button class="btn btn-primary" id="MakeBW"><i class="icon-user icon-white"></i>Make B/W</button>
 	<button class="btn btn-primary" id="MakeBWCon"><i class="icon-user icon-white"></i>Make B/W w/Contrast</button>
 	
-	<button class="btn btn-primary" id="ShowDensity"><i class="icon-user icon-white"></i>Show Density</button>
-
 	<button class="btn btn-primary" id="FindHorizontal"><i class="icon-user icon-white"></i>Find Horizontal Lines</button>
+
+	<button class="btn btn-primary" id="ReduceHorizontal"><i class="icon-user icon-white"></i>Reduce Horizontal Lines</button>
+
+	<button class="btn btn-primary" id="GroupHorizontal"><i class="icon-user icon-white"></i>Group Horizontal Lines</button>
+
+	<button class="btn btn-primary" id="FindVertical"><i class="icon-user icon-white"></i>Find Vertical Lines</button>
+
+	<!-- button class="btn btn-primary" id="ShowDensity"><i class="icon-user icon-white"></i>Show Density</button -->
 	
 
 <div style="width:1500px;">

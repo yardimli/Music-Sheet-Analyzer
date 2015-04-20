@@ -30,6 +30,7 @@ function contrastImage(imageData, contrast) {
 var workingImage;
 var workingImageElem;
 var pic_real_width, pic_real_height;
+var BlackLines = [];
 
 
 function LoadImage(xthis,xcontext,drawImage)
@@ -135,7 +136,7 @@ $(document).ready( function()
 		
 		var WhitePixel = 0;
 		
-		var BlackLines = [];
+		BlackLines.length = 0;
 		BlackLines.push(0);
 		
 		for (var i = (pic_real_width*LineCounter*4), n = pix.length-(pic_real_width*10*4); i < n; i += 4) 
@@ -165,7 +166,7 @@ $(document).ready( function()
 					}
 					
 					
-					BlackLines.push( { "y" : LineCounter, "x1" : StartPixel, "x2" : EndPixel+xBlackPixel  } );
+					BlackLines.push( { y : LineCounter, x1 : StartPixel, x2 : EndPixel+xBlackPixel, ignoreLine:false  } );
 
 					context.beginPath();
 					context.strokeStyle = "rgba(55,65,0,0.5)";
@@ -207,7 +208,150 @@ $(document).ready( function()
 				if ( ((WhitePixel>10) && (BlackCounter<50)) || (WhitePixel>20) && (BlackCounter<250)) { StartPixel=0; }
 			}
 		}
+
+		//add one line at endo of document
+		BlackLines.push( { y : pic_real_height, x1 : 0, x2 : pic_real_width, ignoreLine:true  } );
+		
+		console.log(BlackLines);
 	});
+	
+	$("#ReduceHorizontal").on('click', function ()
+	{
+		context.save(); 
+		context.rotate(RotateValue*(Math.PI/180));
+
+		context.drawImage(workingImage, 0, 0);
+		context.restore();
+
+		//BlackLines.push( { "y" : LineCounter, "x1" : StartPixel, "x2" : EndPixel+xBlackPixel, "ignore":0  } );
+		
+		
+		var StartGroup = -1;
+		var EndGroup = -1;
+		for (var i=0; i<BlackLines.length-1; i++)
+		{
+			if (BlackLines[i].y == BlackLines[i+1].y-1)
+			{
+				if (StartGroup==-1) { StartGroup = i; console.log("Start Group:"+i); }
+				if (StartGroup>=0) { EndGroup = i; console.log("End Group:"+i); }
+			} else
+			{
+				if (StartGroup>=0)
+				{
+					EndGroup = i; console.log("End Group:"+i);
+					
+					for (var j=0; j<(EndGroup-StartGroup+1); j++)
+					{
+						BlackLines[(StartGroup+j)]["ignoreLine"] = true;
+//						console.log("ignore:"+(StartGroup+j)+" "+BlackLines[StartGroup+j].y);
+					}
+
+					if (EndGroup>StartGroup) {
+						MiddleY = Math.floor( (EndGroup-StartGroup+1) / 2);
+					} else
+					{
+						MiddleY = 0;
+					}
+					
+//					console.log("middle:"+(StartGroup+ MiddleY)+" "+BlackLines[StartGroup+ MiddleY].y);
+
+					BlackLines[ (StartGroup+ MiddleY) ]["ignoreLine"] = false;
+
+					var StartGroup = -1;
+					var EndGroup = -1;
+				}
+				
+			}
+		}
+		
+		for (var i=1; i<BlackLines.length; i++)
+		{
+			if (!BlackLines[i]["ignoreLine"])
+			{
+				context.beginPath();
+				context.strokeStyle = "rgba(55,65,0,0.5)";
+				context.fillStyle = "rgba(55,65,0,0.5)";
+				context.lineWidth = 1;
+
+				context.moveTo(BlackLines[i].x1,BlackLines[i].y);
+				context.lineTo(BlackLines[i].x2+20,BlackLines[i].y);
+				context.stroke();
+				
+				context.fillText(BlackLines[i].y, BlackLines[i].x1-20,BlackLines[i].y);
+//				console.log("draw line:"+i+" "+BlackLines[i].y);
+			}
+		}
+	});
+	
+	$("#GroupHorizontal").on('click', function ()
+	{
+		context.save(); 
+		context.rotate(RotateValue*(Math.PI/180));
+
+		context.drawImage(workingImage, 0, 0);
+		context.restore();
+
+		//BlackLines.push( { "y" : LineCounter, "x1" : StartPixel, "x2" : EndPixel+xBlackPixel, "ignore":0  } );
+		
+		
+		var StartGroup = -1;
+		var EndGroup = -1;
+		for (var i=0; i<BlackLines.length-1; i++)
+		{
+			if (BlackLines[i].y == BlackLines[i+1].y-1)
+			{
+				if (StartGroup==-1) { StartGroup = i; console.log("Start Group:"+i); }
+				if (StartGroup>=0) { EndGroup = i; console.log("End Group:"+i); }
+			} else
+			{
+				if (StartGroup>=0)
+				{
+					EndGroup = i; console.log("End Group:"+i);
+					
+					for (var j=0; j<(EndGroup-StartGroup+1); j++)
+					{
+						BlackLines[(StartGroup+j)]["ignoreLine"] = true;
+//						console.log("ignore:"+(StartGroup+j)+" "+BlackLines[StartGroup+j].y);
+					}
+
+					if (EndGroup>StartGroup) {
+						MiddleY = Math.floor( (EndGroup-StartGroup+1) / 2);
+					} else
+					{
+						MiddleY = 0;
+					}
+					
+//					console.log("middle:"+(StartGroup+ MiddleY)+" "+BlackLines[StartGroup+ MiddleY].y);
+
+					BlackLines[ (StartGroup+ MiddleY) ]["ignoreLine"] = false;
+
+					var StartGroup = -1;
+					var EndGroup = -1;
+				}
+				
+			}
+		}
+		
+		for (var i=1; i<BlackLines.length; i++)
+		{
+			if (!BlackLines[i]["ignoreLine"])
+			{
+				context.beginPath();
+				context.strokeStyle = "rgba(55,65,0,0.5)";
+				context.fillStyle = "rgba(55,65,0,0.5)";
+				context.lineWidth = 1;
+
+				context.moveTo(BlackLines[i].x1,BlackLines[i].y);
+				context.lineTo(BlackLines[i].x2,BlackLines[i].y);
+				context.stroke();
+				
+				context.fillText(BlackLines[i].y, BlackLines[i].x1-20,BlackLines[i].y);
+//				console.log("draw line:"+i+" "+BlackLines[i].y);
+			}
+		}
+	});
+	
+	
 	
 	
 	
