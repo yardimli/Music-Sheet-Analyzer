@@ -27,53 +27,66 @@ function contrastImage(imageData, contrast) {
     return imageData;
 }
 
+var workingImage;
+var workingImageElem;
+var pic_real_width, pic_real_height;
+
+
+function LoadImage(xthis,xcontext,drawImage)
+{
+	workingImage = xthis; //document.getElementById("canvasSource");
+	workingImageElem = $(xthis)[0]; // $(this).attr('src'); // Get my img elem
+	
+	$("<img/>") // Make in memory copy of image to avoid css issues
+		.attr("src", $(workingImageElem).attr("src"))
+		.load(function() {
+			pic_real_width = this.width;   // Note: $(this).width() will not
+			pic_real_height = this.height; // work for in memory images.
+
+
+			$("#area").attr('width', pic_real_width);
+			$("#area").attr('height', pic_real_height);
+	
+			if (drawImage) { xcontext.drawImage(workingImage, 0, 0); }
+			
+		});
+		
+}
+
 $(document).ready( function() 
 {
-	var pic_real_width, pic_real_height;
-	
+
 	var canvas = document.getElementById("area");
 	var context = canvas.getContext("2d");
 
 	var RotateValue = 0;
 	
-	var workingImage;
-	var workingImageElem;
 
 	$(".sheet-image").on('click', function ()
 	{
 		RotateValue = 0;
-		workingImage = this; //document.getElementById("canvasSource");
-		workingImageElem = $(this)[0]; // $(this).attr('src'); // Get my img elem
-		$("<img/>") // Make in memory copy of image to avoid css issues
-			.attr("src", $(workingImageElem).attr("src"))
-			.load(function() {
-				pic_real_width = this.width;   // Note: $(this).width() will not
-				pic_real_height = this.height; // work for in memory images.
-
-
-				$("#area").attr('width', pic_real_width);
-				$("#area").attr('height', pic_real_height);
-				context.drawImage(workingImage, 0, 0);
-			});
+		LoadImage(this,context,true);
 	});
 	
 	$("#RotatePlus").on('click', function ()
 	{
-		RotateValue = 0.1;
+//		LoadImage(workingImage);
+		RotateValue += 0.1;
 		context.save(); 
 		context.rotate(RotateValue*(Math.PI/180));
 
-		context.drawImage(canvas, 0, 0);
+		context.drawImage(workingImage, 0, 0);
 		context.restore();
 	});
 
 	$("#RotateMinus").on('click', function ()
 	{
-		RotateValue = -0.1;
+//		LoadImage(workingImage);
+		RotateValue += -0.1;
 		context.save(); 
 		context.rotate(RotateValue*(Math.PI/180));
 
-		context.drawImage(canvas, 0, 0);
+		context.drawImage(workingImage, 0, 0);
 		context.restore();
 	});
 	
@@ -135,29 +148,44 @@ $(document).ready( function()
 				
 				if  ( (BlackCounter>( (pic_real_width-StartPixel)*0.8)) && (BlackCounter>(pic_real_width*0.6)) )
 				{
-					if (LineCounter > BlackLines[ BlackLines.length-1 ]+3)
-					{
-						context.beginPath();
-						context.strokeStyle = "rgba(55,65,0,0.5)";
-						context.fillStyle = "rgba(55,65,0,0.5)";
-						context.lineWidth = 2;
-
-						context.moveTo(0,LineCounter+2);
-						context.lineTo(pic_real_width,LineCounter+2);
-						context.stroke();
-
-						context.beginPath();
-						context.strokeStyle = "rgba(255,5,0,1)";
-						context.fillStyle = "rgba(255,5,0,1)";
-						context.lineWidth = 2;
-						context.moveTo(StartPixel,LineCounter+2);
-						context.lineTo(StartPixel,LineCounter+15);
-						context.stroke();
-
-
-						BlackLines.push(LineCounter+2);
+					
+					EndPixel = pic_real_width;
+					var xBlackPixel = 0;
+					var xEndPixel = i;
+					var xBeginLine = (i-(pic_real_width*LineCounter*4));
+					
+					while ( (xEndPixel>xBeginLine) && (xBlackPixel<3) ) {
+						xEndPixel -= 4;
+						EndPixel--;
+						
+						if ( (pix[xEndPixel]==0) || (pix[xEndPixel+(pic_real_width*4)]==0) || (pix[xEndPixel+(pic_real_width*4*2)]==0) || (pix[xEndPixel+(pic_real_width*4*3)]==0) )
+						{
+							xBlackPixel++;
+						}
 					}
+					
+					
+					BlackLines.push( { "y" : LineCounter, "x1" : StartPixel, "x2" : EndPixel+xBlackPixel  } );
+
+					context.beginPath();
+					context.strokeStyle = "rgba(55,65,0,0.5)";
+					context.fillStyle = "rgba(55,65,0,0.5)";
+					context.lineWidth = 2;
+
+					context.moveTo(StartPixel,LineCounter);
+					context.lineTo(EndPixel+xBlackPixel,LineCounter);
+					context.stroke();
+/*
+					context.beginPath();
+					context.strokeStyle = "rgba(255,5,0,1)";
+					context.fillStyle = "rgba(255,5,0,1)";
+					context.lineWidth = 2;
+					context.moveTo(StartPixel,LineCounter+2);
+					context.lineTo(StartPixel,LineCounter+15);
+					context.stroke();
+					*/
 				}
+				
 				var StartPixel = 0;
 				var EndPixel   = 0;
 
@@ -168,7 +196,7 @@ $(document).ready( function()
 				BlackCounter = 0;
 			}
 			
-			if ( (pix[i]==0) || (pix[i-(pic_real_width*4)]==0) || (pix[i-(pic_real_width*4*2)]==0) || (pix[i+(pic_real_width*4)]==0) || (pix[i+(pic_real_width*4*2)]==0) )
+			if ( (pix[i]==0) || (pix[i+(pic_real_width*4)]==0) || (pix[i+(pic_real_width*4*2)]==0) || (pix[i+(pic_real_width*4*3)]==0) )
 			{
 				BlackCounter++;
 				WhitePixel = 0;
@@ -176,7 +204,7 @@ $(document).ready( function()
 			} else
 			{
 				WhitePixel++;
-				if ((WhitePixel>20) && (BlackCounter<50)) { StartPixel=0; }
+				if ( ((WhitePixel>10) && (BlackCounter<50)) || (WhitePixel>20) && (BlackCounter<250)) { StartPixel=0; }
 			}
 		}
 	});
