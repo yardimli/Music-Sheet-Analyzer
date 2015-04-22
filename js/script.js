@@ -32,6 +32,10 @@ var workingImageElem;
 var pic_real_width, pic_real_height;
 var BlackLines = [];
 
+var LineSpacings = [];
+
+var HorizontalBars = [];
+
 
 function LoadImage(xthis,xcontext,drawImage)
 {
@@ -212,7 +216,7 @@ $(document).ready( function()
 		//add one line at endo of document
 		BlackLines.push( { y : pic_real_height, x1 : 0, x2 : pic_real_width, ignoreLine:true  } );
 		
-		console.log(BlackLines);
+		//console.log(BlackLines);
 	});
 	
 	$("#ReduceHorizontal").on('click', function ()
@@ -232,18 +236,26 @@ $(document).ready( function()
 		{
 			if (BlackLines[i].y == BlackLines[i+1].y-1)
 			{
-				if (StartGroup==-1) { StartGroup = i; console.log("Start Group:"+i); }
-				if (StartGroup>=0) { EndGroup = i; console.log("End Group:"+i); }
+				if (StartGroup==-1) { 
+					StartGroup = i; 
+//					console.log("Start Group:"+i); 
+				}
+				
+				if (StartGroup>=0) { 
+					EndGroup = i; 
+				//	console.log("End Group:"+i); 
+				}
 			} else
 			{
 				if (StartGroup>=0)
 				{
-					EndGroup = i; console.log("End Group:"+i);
+					EndGroup = i; 
+//					console.log("End Group:"+i);
 					
 					for (var j=0; j<(EndGroup-StartGroup+1); j++)
 					{
-						BlackLines[(StartGroup+j)]["ignoreLine"] = true;
-//						console.log("ignore:"+(StartGroup+j)+" "+BlackLines[StartGroup+j].y);
+						BlackLines[(StartGroup+j)].ignoreLine = true;
+					//	console.log("ignore:"+(StartGroup+j)+" "+BlackLines[StartGroup+j].y);
 					}
 
 					if (EndGroup>StartGroup) {
@@ -255,7 +267,7 @@ $(document).ready( function()
 					
 //					console.log("middle:"+(StartGroup+ MiddleY)+" "+BlackLines[StartGroup+ MiddleY].y);
 
-					BlackLines[ (StartGroup+ MiddleY) ]["ignoreLine"] = false;
+					BlackLines[ (StartGroup+ MiddleY) ].ignoreLine = false;
 
 					var StartGroup = -1;
 					var EndGroup = -1;
@@ -266,7 +278,7 @@ $(document).ready( function()
 		
 		for (var i=1; i<BlackLines.length; i++)
 		{
-			if (!BlackLines[i]["ignoreLine"])
+			if (!BlackLines[i].ignoreLine)
 			{
 				context.beginPath();
 				context.strokeStyle = "rgba(55,65,0,0.5)";
@@ -283,8 +295,35 @@ $(document).ready( function()
 		}
 	});
 	
+	
+	function standardDeviation(values){
+	  var avg = average(values);
+
+	  var squareDiffs = values.map(function(value){
+		var diff = value - avg;
+		var sqrDiff = diff * diff;
+		return sqrDiff;
+	  });
+
+	  var avgSquareDiff = average(squareDiffs);
+
+	  var stdDev = Math.sqrt(avgSquareDiff);
+	  return stdDev;
+	}
+
+	function average(data){
+	  var sum = data.reduce(function(sum, value){
+		return sum + value;
+	  }, 0);
+
+	  var avg = sum / data.length;
+	  return avg;
+	}	
+	
+	
 	$("#GroupHorizontal").on('click', function ()
 	{
+
 		context.save(); 
 		context.rotate(RotateValue*(Math.PI/180));
 
@@ -296,59 +335,126 @@ $(document).ready( function()
 		
 		var StartGroup = -1;
 		var EndGroup = -1;
-		for (var i=0; i<BlackLines.length-1; i++)
+		
+		var LastSpaceing = 0;
+		var NumLines = 0;
+		var LastArrayPos = 0;
+		
+		LineSpacings.length = 0;
+		
+		for (var i=1; i<BlackLines.length-1; i++)
 		{
-			if (BlackLines[i].y == BlackLines[i+1].y-1)
+			if (!BlackLines[i].ignoreLine)
 			{
-				if (StartGroup==-1) { StartGroup = i; console.log("Start Group:"+i); }
-				if (StartGroup>=0) { EndGroup = i; console.log("End Group:"+i); }
-			} else
-			{
-				if (StartGroup>=0)
-				{
-					EndGroup = i; console.log("End Group:"+i);
-					
-					for (var j=0; j<(EndGroup-StartGroup+1); j++)
-					{
-						BlackLines[(StartGroup+j)]["ignoreLine"] = true;
-//						console.log("ignore:"+(StartGroup+j)+" "+BlackLines[StartGroup+j].y);
-					}
-
-					if (EndGroup>StartGroup) {
-						MiddleY = Math.floor( (EndGroup-StartGroup+1) / 2);
-					} else
-					{
-						MiddleY = 0;
-					}
-					
-//					console.log("middle:"+(StartGroup+ MiddleY)+" "+BlackLines[StartGroup+ MiddleY].y);
-
-					BlackLines[ (StartGroup+ MiddleY) ]["ignoreLine"] = false;
-
-					var StartGroup = -1;
-					var EndGroup = -1;
-				}
 				
+				if (LastArrayPos==0) {
+					LastArrayPos = i;
+				} else
+				{
+					LineSpacings.push( (BlackLines[i].y-BlackLines[LastArrayPos].y)  );
+				
+					console.log("draw line:"+i+" "+BlackLines[i].y+" "+(BlackLines[i].y-BlackLines[LastArrayPos].y));
+					
+					LastArrayPos = i;
+				}
 			}
 		}
 		
-		for (var i=1; i<BlackLines.length; i++)
+	
+		var xDeviation = standardDeviation(LineSpacings);
+		
+		console.log("standardDeviation: "+xDeviation);
+		
+		LastArrayPos = 0;
+		var NewSetTop = 0;
+		
+		var NewSetBottom = 0;
+		
+		HorizontalBars.length =0;
+		
+		for (var i=1; i<BlackLines.length-1; i++)
 		{
-			if (!BlackLines[i]["ignoreLine"])
+			if (!BlackLines[i].ignoreLine)
 			{
-				context.beginPath();
-				context.strokeStyle = "rgba(55,65,0,0.5)";
-				context.fillStyle = "rgba(55,65,0,0.5)";
-				context.lineWidth = 1;
-
-				context.moveTo(BlackLines[i].x1,BlackLines[i].y);
-				context.lineTo(BlackLines[i].x2,BlackLines[i].y);
-				context.stroke();
 				
-				context.fillText(BlackLines[i].y, BlackLines[i].x1-20,BlackLines[i].y);
-//				console.log("draw line:"+i+" "+BlackLines[i].y);
+				if (LastArrayPos==0) {
+					LastArrayPos = i;
+					NewSetTop = i;
+				} else
+				{
+					var spaceingY = (BlackLines[i].y-BlackLines[LastArrayPos].y);
+					
+					if (spaceingY>xDeviation) {
+						
+						//save old set box
+						
+						var MinX = pic_real_width;
+						var MaxX = 0;
+						var XNumLines = 0;
+						for (var i2 = NewSetTop; i2<NewSetBottom; i2++)
+						{
+							if (BlackLines[i2].x1<MinX) { MinX = BlackLines[i2].x1; }
+							if (BlackLines[i2].x2>MaxX) { MaxX = BlackLines[i2].x2; }
+							XNumLines++;
+						}
+
+						if (XNumLines>2) //save if more than 2 lines normally it should be 5 but 2 could work too if some were not detected
+						{
+							HorizontalBars.push({ SetTop : NewSetTop, SetBottom : NewSetBottom, 
+												TopPos: BlackLines[NewSetTop].y, LeftPos : MinX, HeightX : BlackLines[NewSetBottom].y-BlackLines[NewSetTop].y, WidthX : MaxX-MinX });
+						}
+						
+						
+						console.log("NEW SET");
+						NewSetTop = i;
+					} else
+					{
+						NewSetBottom = i;
+					}
+				
+					console.log("draw line:"+i+" "+BlackLines[i].y+" "+(BlackLines[i].y-BlackLines[LastArrayPos].y));
+					
+					LastArrayPos = i;
+				}
 			}
 		}
+		
+		//save last set
+
+
+		var MinX = pic_real_width;
+		var MaxX = 0;
+		var XNumLines = 0;
+		for (var i2 = NewSetTop; i2<NewSetBottom; i2++)
+		{
+			if (BlackLines[i2].x1<MinX) { MinX = BlackLines[i2].x1; }
+			if (BlackLines[i2].x2>MaxX) { MaxX = BlackLines[i2].x2; }
+			XNumLines++;
+		}
+		
+		if (XNumLines>2) //save if more than 2 lines normally it should be 5 but 2 could work too if some were not detected
+		{
+			HorizontalBars.push({ SetTop : NewSetTop, SetBottom : NewSetBottom, 
+								TopPos: BlackLines[NewSetTop].y, LeftPos : MinX, HeightX : BlackLines[NewSetBottom].y-BlackLines[NewSetTop].y, WidthX : MaxX-MinX });
+		}
+		
+		for (var i=0; i<HorizontalBars.length; i++)
+		{
+			context.beginPath();
+			context.rect(HorizontalBars[i].LeftPos, HorizontalBars[i].TopPos, HorizontalBars[i].WidthX, HorizontalBars[i].HeightX  );
+
+			context.strokeStyle = "rgba(55,65,0,0.6)";
+			context.fillStyle = "rgba(255,165,0,0.3)";
+			context.lineWidth = 1;
+
+			context.fill();
+			context.stroke();
+		}
+		
+		
+		
+		
+		
 	});
 	
 	
