@@ -451,9 +451,33 @@ $(document).ready( function()
 			context.stroke();
 		}
 		
+	});
+	
+	$("#FindVertical").on('click', function ()
+	{
 		
+		var imgd = context.getImageData(0, 0, pic_real_width, pic_real_height);
+		var pix = imgd.data;
 		
-		
+		for (var i=0; i<HorizontalBars.length; i++)
+		{
+			
+			for (var j=HorizontalBars[i].LeftPos; j< HorizontalBars[i].LeftPos+HorizontalBars[i].WidthX; j++)
+			{
+				
+				for (var k=HorizontalBars[i].TopPos; k< HorizontalBars[i].TopPos+HorizontalBars[i].HeightX; k++)
+				{
+				
+				context.beginPath();
+				context.strokeStyle = "rgba(55,65,0,0.5)";
+				context.fillStyle = "rgba(55,65,0,0.5)";
+				context.lineWidth = 2;
+
+				context.moveTo(j,HorizontalBars[i].TopPos);
+				context.lineTo(j,HorizontalBars[i].TopPos+HorizontalBars[i].HeightX);
+				context.stroke();
+			}
+		}
 		
 	});
 	
