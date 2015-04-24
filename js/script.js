@@ -107,6 +107,7 @@ $(document).ready( function()
 	{
 		var imgd = context.getImageData(0, 0, pic_real_width, pic_real_height);
 		var pix = imgd.data;
+		
 		for (var i = 0, n = pix.length; i < n; i += 4) {
 			var grayscale = pix[i  ] * .3 + pix[i+1] * .59 + pix[i+2] * .11;
 			
@@ -458,26 +459,119 @@ $(document).ready( function()
 		
 		var imgd = context.getImageData(0, 0, pic_real_width, pic_real_height);
 		var pix = imgd.data;
+
+		//b/w first
+		for (var i = 0, n = pix.length; i < n; i += 4) {
+			var grayscale = pix[i  ] * .3 + pix[i+1] * .59 + pix[i+2] * .11;
+			
+			if (grayscale>128) { 
+				pix[i  ] = 255; 	// red
+				pix[i+1] = 255; 	// green
+				pix[i+2] = 255; 	// blue
+			} else
+			{
+				pix[i  ] = 0; 	// red
+				pix[i+1] = 0; 	// green
+				pix[i+2] = 0; 	// blue
+			}
+		}
+		
 		
 		for (var i=0; i<HorizontalBars.length; i++)
 		{
 			
-			for (var j=HorizontalBars[i].LeftPos; j< HorizontalBars[i].LeftPos+HorizontalBars[i].WidthX; j++)
+			var PrevFound = 0;
+			
+			for (var j=HorizontalBars[i].LeftPos-10; j< HorizontalBars[i].LeftPos+HorizontalBars[i].WidthX+10; j++)
 			{
+				
+				var BlackDots = 0;
+				var WhiteDots = 0;
 				
 				for (var k=HorizontalBars[i].TopPos; k< HorizontalBars[i].TopPos+HorizontalBars[i].HeightX; k++)
 				{
+					var rpix = pix[ (k*4*pic_real_width) + (j*4)  + 0 ];
+					var gpix = pix[ (k*4*pic_real_width) + (j*4)  + 1 ];
+					var bpix = pix[ (k*4*pic_real_width) + (j*4)  + 2 ];
+					
+					if ( (rpix==0) && (gpix==0) && (bpix==0) ) { BlackDots++; } else { WhiteDots++; }
+				}
 				
-				context.beginPath();
-				context.strokeStyle = "rgba(55,65,0,0.5)";
-				context.fillStyle = "rgba(55,65,0,0.5)";
-				context.lineWidth = 2;
+				//if found a major white line
+				if ( (WhiteDots>HorizontalBars[i].HeightX*0.8 ) ) { 
+					
+					if (PrevFound!=1)
+					{
+						context.beginPath();
+						context.strokeStyle = "rgba(55,65,0,0.5)";
+						context.fillStyle = "rgba(55,65,0,0.5)";
+						context.lineWidth = 1;
 
-				context.moveTo(j,HorizontalBars[i].TopPos);
-				context.lineTo(j,HorizontalBars[i].TopPos+HorizontalBars[i].HeightX);
-				context.stroke();
+						context.moveTo(j,HorizontalBars[i].TopPos-10);
+						context.lineTo(j,HorizontalBars[i].TopPos+HorizontalBars[i].HeightX+10);
+						context.stroke();
+					}
+					
+					PrevFound = 1;
+				} else
+					
+				//found black line
+				if ( (BlackDots>HorizontalBars[i].HeightX*0.8 ) )
+				{
+					if (PrevFound!=2)
+					{
+						context.beginPath();
+						context.strokeStyle = "rgba(55,65,0,0.5)";
+						context.fillStyle = "rgba(55,65,0,0.5)";
+						context.lineWidth = 1;
+
+						context.moveTo(j,HorizontalBars[i].TopPos-40);
+						context.lineTo(j,HorizontalBars[i].TopPos+HorizontalBars[i].HeightX+40);
+						context.stroke();
+					}
+					
+					PrevFound = 2;
+					
+					//look behind if white then mark it
+					
+					var BlackDots2 = 0;
+					var WhiteDots2 = 0;
+
+					for (var k=HorizontalBars[i].TopPos; k< HorizontalBars[i].TopPos+HorizontalBars[i].HeightX; k++)
+					{
+						var rpix = pix[ (k*4*pic_real_width) + (j-1*4)  + 0 ];
+						var gpix = pix[ (k*4*pic_real_width) + (j-1*4)  + 1 ];
+						var bpix = pix[ (k*4*pic_real_width) + (j-1*4)  + 2 ];
+
+						if ( (rpix==0) && (gpix==0) && (bpix==0) ) { BlackDots2++; } else { WhiteDots2++; }
+					}
+					
+					if ( (WhiteDots2>HorizontalBars[i].HeightX*0.8 ) ) { 
+
+						context.beginPath();
+						context.strokeStyle = "rgba(55,65,0,0.5)";
+						context.fillStyle = "rgba(55,65,0,0.5)";
+						context.lineWidth = 1;
+
+						context.moveTo(j-1,HorizontalBars[i].TopPos-10);
+						context.lineTo(j-1,HorizontalBars[i].TopPos+HorizontalBars[i].HeightX+10);
+						context.stroke();
+					}
+					//------------------
+
+					
+				} else
+				
+				{
+					PrevFound = 0;
+					
+				}
+				
 			}
 		}
+		
+//		context.putImageData(imgd, 0, 0);
+		
 		
 	});
 	
