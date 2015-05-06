@@ -18,7 +18,6 @@ error_reporting(E_ERROR);
 		<script src="js/jquery-2.1.3.min.js"></script>
 		<script src="js/bootstrap.min.js"></script>
 		<script src="js/script.js"></script>
-		<script src="js/filters.js"></script>
 	</head>
 <body>
 
@@ -56,24 +55,26 @@ $handle = opendir(dirname(realpath(__FILE__)).'/music-sheet/');
 ?>
 	</div>
 		
-	<button class="btn btn-primary" id="RotatePlus"><i class="icon-user icon-white"></i>Rotate +0.1</button>
-	<button class="btn btn-primary" id="RotateMinus"><i class="icon-user icon-white"></i>Rotate -0.1</button>
+	<button class="btn btn-primary" id="RotatePlus"><i class="icon-user icon-white"></i>Rotate (+0.1)</button>
+	<button class="btn btn-primary" id="RotateMinus"><i class="icon-user icon-white"></i>Rotate (-0.1)</button>
 
-	<button class="btn btn-primary" id="FindHorizontal"><i class="icon-user icon-white"></i> Horizontal Lines</button>
+	<button class="btn btn-primary" id="MakeBW"><i class="icon-user icon-white"></i>Make B/W</button>
+	<button class="btn btn-primary" id="MakeBWCon"><i class="icon-user icon-white"></i>Make B/W w/Contrast</button>
+	
+	<button class="btn btn-primary" id="FindHorizontal"><i class="icon-user icon-white"></i>Find Horizontal Lines</button>
 
 	<button class="btn btn-primary" id="ReduceHorizontal"><i class="icon-user icon-white"></i>Reduce Horizontal Lines</button>
 
 	<button class="btn btn-primary" id="GroupHorizontal"><i class="icon-user icon-white"></i>Group Horizontal Lines</button>
 
-	<button class="btn btn-primary" id="FindVertical"><i class="icon-user icon-white"></i> Vertical Lines</button>
-	
-	<button class="btn btn-primary" id="SobelHorizontal"><i class="icon-user icon-white"></i>Sobel Horizontal</button>	
-	<button class="btn btn-primary" id="SobelVertical"><i class="icon-user icon-white"></i>Sobel Vertical</button>	
+	<button class="btn btn-primary" id="FindVertical"><i class="icon-user icon-white"></i>Find Vertical Lines</button>
+
+	<!-- button class="btn btn-primary" id="ShowDensity"><i class="icon-user icon-white"></i>Show Density</button -->
 	
 
 <div style="width:1500px;">
 	<div style="width:1500px; height:500px; overflow:auto; border: 1px solid #555; margin-top:10px; display: inline-block;">
-		<canvas id="area" width="500" height="300"></canvas>
+		<img src="" ID="CurrentImage">
 	</div>
 
 </div>

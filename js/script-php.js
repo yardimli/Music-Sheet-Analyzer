@@ -1,6 +1,31 @@
+function contrastImage(imageData, contrast) {
 
+    var data = imageData.data;
+    var factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
 
-//--------------------------------------------------------------------------------
+    for(var i=0;i<data.length;i+=4)
+    {
+        data[i] = factor * (data[i] - 128) + 128;
+        data[i+1] = factor * (data[i+1] - 128) + 128;
+        data[i+2] = factor * (data[i+2] - 128) + 128;
+		
+		var grayscale = data[i  ] * .3 + data[i+1] * .59 + data[i+2] * .11;
+
+		if (grayscale>192) { 
+			data[i  ] = 255; 	// red
+			data[i+1] = 255; 	// green
+			data[i+2] = 255; 	// blue
+		} else
+		{
+			data[i  ] = 0; 	// red
+			data[i+1] = 0; 	// green
+			data[i+2] = 0; 	// blue
+		}
+		
+    }
+	
+    return imageData;
+}
 
 var workingImage;
 var workingImageElem;
@@ -11,66 +36,68 @@ var LineSpacings = [];
 
 var HorizontalBars = [];
 
-
-function LoadImage(xthis,xcontext,drawImage)
-{
-	workingImage = xthis; //document.getElementById("canvasSource");
-	workingImageElem = $(xthis)[0]; // $(this).attr('src'); // Get my img elem
-	
-	$("<img/>") // Make in memory copy of image to avoid css issues
-		.attr("src", $(workingImageElem).attr("src"))
-		.load(function() {
-			pic_real_width = this.width;   // Note: $(this).width() will not
-			pic_real_height = this.height; // work for in memory images.
-
-
-			$("#area").attr('width', pic_real_width);
-			$("#area").attr('height', pic_real_height);
-	
-			if (drawImage) { xcontext.drawImage(workingImage, 0, 0); }
-			
-		});
-		
-}
+var RotateValue = 0;
 
 $(document).ready( function() 
 {
-
-	var canvas = document.getElementById("area");
-	var context = canvas.getContext("2d");
-
-	var RotateValue = 0;
-	
-
 	$(".sheet-image").on('click', function ()
 	{
 		RotateValue = 0;
-		LoadImage(this,context,true);
+		console.log($(this).prop("src"));
+
+		$("#CurrentImage").attr("src","functions.php?op=load&img="+$(this).prop("src"));
+/*		
+		$.get("functions.php?op=load&img="+$(this).prop("src"), function(data){
+			console.log(data);
+			$("#CurrentImage").attr("src",data);
+		});
+		*/
 	});
 	
 	$("#RotatePlus").on('click', function ()
 	{
-//		LoadImage(workingImage);
 		RotateValue += 0.1;
-		context.save(); 
-		context.rotate(RotateValue*(Math.PI/180));
+		$("#CurrentImage").attr("src","functions.php?op=rotate&value="+RotateValue);
+		
 
-		context.drawImage(workingImage, 0, 0);
-		context.restore();
 	});
 
 	$("#RotateMinus").on('click', function ()
 	{
-//		LoadImage(workingImage);
 		RotateValue += -0.1;
-		context.save(); 
-		context.rotate(RotateValue*(Math.PI/180));
-
-		context.drawImage(workingImage, 0, 0);
-		context.restore();
+		$("#CurrentImage").attr("src","functions.php?op=rotate&value="+RotateValue);
 	});
 	
 		
+	$("#MakeBWCon").on('click', function ()
+	{
+		var imgd = context.getImageData(0, 0, pic_real_width, pic_real_height);
+		var pix = contrastImage(imgd,-30);
+		context.putImageData(imgd, 0, 0);
+	});
+	
+	$("#MakeBW").on('click', function ()
+	{
+		var imgd = context.getImageData(0, 0, pic_real_width, pic_real_height);
+		var pix = imgd.data;
+		
+		for (var i = 0, n = pix.length; i < n; i += 4) {
+			var grayscale = pix[i  ] * .3 + pix[i+1] * .59 + pix[i+2] * .11;
+			
+			if (grayscale>128) { 
+				pix[i  ] = 255; 	// red
+				pix[i+1] = 255; 	// green
+				pix[i+2] = 255; 	// blue
+			} else
+			{
+				pix[i  ] = 0; 	// red
+				pix[i+1] = 0; 	// green
+				pix[i+2] = 0; 	// blue
+			}
+		}
+		context.putImageData(imgd, 0, 0);
+	});
+	
 	$("#FindHorizontal").on('click', function ()
 	{
 		
@@ -110,7 +137,7 @@ $(document).ready( function()
 						xEndPixel -= 4;
 						EndPixel--;
 						
-						if ( (pix[xEndPixel]==0) || (pix[xEndPixel+(pic_real_width*4)]==0) )
+						if ( (pix[xEndPixel]==0) || (pix[xEndPixel+(pic_real_width*4)]==0) || (pix[xEndPixel+(pic_real_width*4*2)]==0) || (pix[xEndPixel+(pic_real_width*4*3)]==0) )
 						{
 							xBlackPixel++;
 						}
@@ -148,7 +175,7 @@ $(document).ready( function()
 				BlackCounter = 0;
 			}
 			
-			if ( (pix[i]==0) || (pix[i+(pic_real_width*4)]==0)  )
+			if ( (pix[i]==0) || (pix[i+(pic_real_width*4)]==0) || (pix[i+(pic_real_width*4*2)]==0) || (pix[i+(pic_real_width*4*3)]==0) )
 			{
 				BlackCounter++;
 				WhitePixel = 0;
@@ -406,6 +433,22 @@ $(document).ready( function()
 		var imgd = context.getImageData(0, 0, pic_real_width, pic_real_height);
 		var pix = imgd.data;
 
+		//b/w first
+		for (var i = 0, n = pix.length; i < n; i += 4) {
+			var grayscale = pix[i  ] * .3 + pix[i+1] * .59 + pix[i+2] * .11;
+			
+			if (grayscale>128) { 
+				pix[i  ] = 255; 	// red
+				pix[i+1] = 255; 	// green
+				pix[i+2] = 255; 	// blue
+			} else
+			{
+				pix[i  ] = 0; 	// red
+				pix[i+1] = 0; 	// green
+				pix[i+2] = 0; 	// blue
+			}
+		}
+		
 		
 		for (var i=0; i<HorizontalBars.length; i++)
 		{
@@ -486,13 +529,31 @@ $(document).ready( function()
 						if (WhiteDots3>HorizontalBars[i].HeightX*0.7) { StillBlackLines--; }
 					}
 					
+					//now see if the black and white pixels match the one before the black line
+					var MissMatch = 0;
+					var ArrayPos = 0;
+					for (var k=HorizontalBars[i].TopPos; k< HorizontalBars[i].TopPos+HorizontalBars[i].HeightX; k++)
+					{
+						var rpix = pix[ (k*4*pic_real_width) + ((j+TempXPlus)*4)  + 0 ];
+						var gpix = pix[ (k*4*pic_real_width) + ((j+TempXPlus)*4)  + 1 ];
+						var bpix = pix[ (k*4*pic_real_width) + ((j+TempXPlus)*4)  + 2 ];
+
+						if ( (rpix==0) && (gpix==0) && (bpix==0) ) { 
+							if (BlackLinesArray[ArrayPos]!=1) { MissMatch++; }
+						} else { 
+							if (BlackLinesArray[ArrayPos]!=0) { MissMatch++; }
+						}
+						ArrayPos++;
+					}
+					
+					
 					//now look for major white at end
 					
-//					if ( (WhiteDots2>HorizontalBars[i].HeightX*0.7 ) && (WhiteDots3>HorizontalBars[i].HeightX*0.7 ) && (StillBlackLines==0) ) 
-					{ 
+					if ( (WhiteDots2>HorizontalBars[i].HeightX*0.7 ) && (WhiteDots3>HorizontalBars[i].HeightX*0.7 ) && (StillBlackLines==0) && 
+							( MissMatch<10) ) { 
 						
 						
-//						context.fillText(MissMatch, j,HorizontalBars[i].TopPos-20);
+						context.fillText(MissMatch, j,HorizontalBars[i].TopPos-20);
 
 						context.beginPath();
 						context.strokeStyle = "rgba(0,65,0,0.5)";
@@ -535,96 +596,65 @@ $(document).ready( function()
 	
 	
 	
+	$("#ShowDensity").on('click', function ()
+	{
+		var imgd = context.getImageData(0, 0, pic_real_width, pic_real_height);
+		var pix = imgd.data;
+		var LineCounter = 0;
+		var PixelCounter = 0;
+		var BlackCounter = 0;
+		
+		var TotalValue = 0;
+		
+		for (var i = 0, n = pix.length; i < n; i += 4) 
+		{
+			PixelCounter++;
+			
+			if (PixelCounter>pic_real_width) { 
+				
+				TotalValue += BlackCounter;
+				context.beginPath();
+				context.strokeStyle = "rgba(255,165,0,0.5)";
+				context.fillStyle = "rgba(255,165,0,0.5)";
+				context.lineWidth = 1;
+				
+				context.moveTo(0,LineCounter);
+				context.lineTo(BlackCounter,LineCounter);
+				context.stroke();
+				//console.log(BlackCounter);
+				
+				PixelCounter=1;
+				LineCounter++; 
+				BlackCounter = 0;
+			}
+			
+			if (pix[i]==0)
+			{
+				BlackCounter++;
+			}
+		}
+		TotalValue = TotalValue / pic_real_height;
+		context.beginPath();
+		context.strokeStyle = "rgba(155,65,0,0.5)";
+		context.fillStyle = "rgba(155,65,0,0.5)";
+		context.lineWidth = 2;
+		
+		context.moveTo(TotalValue,0);
+		context.lineTo(TotalValue,pic_real_height);
+		context.stroke();
+
+		context.beginPath();
+		context.strokeStyle = "rgba(55,5,0,0.5)";
+		context.fillStyle = "rgba(55,5,0,0.5)";
+		context.lineWidth = 2;
+		
+		context.moveTo(TotalValue/2,0);
+		context.lineTo(TotalValue/2,pic_real_height);
+		context.stroke();
+		
+	});
+
 	
-	$("#SobelHorizontal").on('click', function ()
-	{
+	
 		
-//		var imgd = context.getImageData(0, 0, pic_real_width, pic_real_height);
-		var grayscale = Filters.filterImage(Filters.grayscale, canvas);
-		 
-		
-		// Note that ImageData values are clamped between 0 and 255, so we need
-		// to use a Float32Array for the gradient values because they
-		// range between -255 and 255.
-		var vertical = Filters.convolveFloat32(grayscale,
-		  [ -1, 0, 1,
-			-2, 0, 2,
-			-1, 0, 1 ]);
-		var horizontal = Filters.convolveFloat32(grayscale,
-		  [ -1, -2, -1,
-			 0,  0,  0,
-			 1,  2,  1 ]);
-		
-		var final_image = Filters.createImageData(vertical.width, vertical.height);
-		
-		for (var i=0; i<final_image.data.length; i+=4) {
-			// make the vertical gradient red
-			var v = Math.abs(vertical.data[i]);
-			var h = Math.abs(horizontal.data[i]);
-
-			final_image.data[i] = h; //v;
-			final_image.data[i+1] = h; //v;
-			final_image.data[i+2] = h; //v;
-			final_image.data[i+3] = 255; //v;
-		}
-		
-		context.putImageData(final_image, 0, 0);		
-		
-		var invert = Filters.filterImage(Filters.invert, canvas);
-		context.putImageData(invert, 0, 0);		
-		
-		var invert = Filters.filterImage(Filters.threshold, canvas, 128);
-		context.putImageData(invert, 0, 0);		
-		
-	});
-	   
-	$("#SobelVertical").on('click', function ()
-	{
-		
-//		var imgd = context.getImageData(0, 0, pic_real_width, pic_real_height);
-		var grayscale = Filters.filterImage(Filters.grayscale, canvas);
-		 
-		
-		var vertical = Filters.convolveFloat32(grayscale,
-		  [ -1, 0, 1,
-			-2, 0, 2,
-			-1, 0, 1 ]);
-		var horizontal = Filters.convolveFloat32(grayscale,
-		  [ -1, -2, -1,
-			 0,  0,  0,
-			 1,  2,  1 ]);
-		
-		var final_image = Filters.createImageData(vertical.width, vertical.height);
-		
-		for (var i=0; i<final_image.data.length; i+=4) {
-			var v = Math.abs(vertical.data[i]);
-			var h = Math.abs(horizontal.data[i]);
-
-			final_image.data[i] = v;
-			final_image.data[i+1] = v;
-			final_image.data[i+2] = v;
-			final_image.data[i+3] = 255;
-		
-			/*
-			// make the vertical gradient red
-			final_image.data[i] = v;
-			// make the horizontal gradient green
-			final_image.data[i+1] = h;
-			// and mix in some blue for aesthetics
-			final_image.data[i+2] = (v+h)/4;
-			final_image.data[i+3] = 255; // opaque alpha		
-			*/
-		  
-		}
-		
-		context.putImageData(final_image, 0, 0);		
-		
-		var invert = Filters.filterImage(Filters.invert, canvas);
-		context.putImageData(invert, 0, 0);		
-		
-		var invert = Filters.filterImage(Filters.threshold, canvas, 128);
-		context.putImageData(invert, 0, 0);		
-		
-
-	});
 });
