@@ -10,6 +10,9 @@ var BlackLines = [];
 var LineSpacings = [];
 
 var HorizontalBars = [];
+var RotateValue = 0;
+var canvas;
+var context;
 
 
 function LoadImage(xthis,xcontext,drawImage)
@@ -33,21 +36,74 @@ function LoadImage(xthis,xcontext,drawImage)
 		
 }
 
+function refreshImage(xcontext,callback)
+{
+	
+	$("<img/>") // Make in memory copy of image to avoid css issues
+		.attr("src", $(workingImageElem).attr("src"))
+		.load(function() {
+			pic_real_width = this.width;   // Note: $(this).width() will not
+			pic_real_height = this.height; // work for in memory images.
+
+
+			$("#area").attr('width', pic_real_width);
+			$("#area").attr('height', pic_real_height);
+	
+			xcontext.drawImage(workingImage, 0, 0);
+			
+			xcontext.save(); 
+			xcontext.rotate(RotateValue*(Math.PI/180));
+
+			xcontext.drawImage(workingImage, 0, 0);
+			xcontext.restore();
+			
+			callback();
+			
+		});
+}
+
+
+function standardDeviation(values){
+  var avg = average(values);
+
+  var squareDiffs = values.map(function(value){
+	var diff = value - avg;
+	var sqrDiff = diff * diff;
+	return sqrDiff;
+  });
+
+  var avgSquareDiff = average(squareDiffs);
+
+  var stdDev = Math.sqrt(avgSquareDiff);
+  return stdDev;
+}
+
+function average(data){
+  var sum = data.reduce(function(sum, value){
+	return sum + value;
+  }, 0);
+
+  var avg = sum / data.length;
+  return avg;
+}	
+
+
+
 $(document).ready( function() 
 {
+	canvas = document.getElementById("area");
+	context = canvas.getContext("2d");
 
-	var canvas = document.getElementById("area");
-	var context = canvas.getContext("2d");
 
-	var RotateValue = 0;
-	
-
+	//----------------------------------------
 	$(".sheet-image").on('click', function ()
 	{
 		RotateValue = 0;
 		LoadImage(this,context,true);
 	});
+
 	
+	//----------------------------------------
 	$("#RotatePlus").on('click', function ()
 	{
 //		LoadImage(workingImage);
@@ -59,6 +115,8 @@ $(document).ready( function()
 		context.restore();
 	});
 
+
+	//----------------------------------------
 	$("#RotateMinus").on('click', function ()
 	{
 //		LoadImage(workingImage);
@@ -71,9 +129,9 @@ $(document).ready( function()
 	});
 	
 		
+	//----------------------------------------
 	$("#FindHorizontal").on('click', function ()
 	{
-		
 		var imgd = context.getImageData(0, 0, pic_real_width, pic_real_height);
 		var pix = imgd.data;
 		
@@ -165,7 +223,9 @@ $(document).ready( function()
 		
 		//console.log(BlackLines);
 	});
+
 	
+	//----------------------------------------
 	$("#ReduceHorizontal").on('click', function ()
 	{
 		context.save(); 
@@ -243,31 +303,7 @@ $(document).ready( function()
 	});
 	
 	
-	function standardDeviation(values){
-	  var avg = average(values);
-
-	  var squareDiffs = values.map(function(value){
-		var diff = value - avg;
-		var sqrDiff = diff * diff;
-		return sqrDiff;
-	  });
-
-	  var avgSquareDiff = average(squareDiffs);
-
-	  var stdDev = Math.sqrt(avgSquareDiff);
-	  return stdDev;
-	}
-
-	function average(data){
-	  var sum = data.reduce(function(sum, value){
-		return sum + value;
-	  }, 0);
-
-	  var avg = sum / data.length;
-	  return avg;
-	}	
-	
-	
+	//----------------------------------------
 	$("#GroupHorizontal").on('click', function ()
 	{
 
@@ -400,9 +436,171 @@ $(document).ready( function()
 		
 	});
 	
+
+
+	
+	
+	
+	//----------------------------------------
+	$("#SobelHorizontal").on('click', function ()
+	{
+
+		refreshImage(context, function() {
+
+			var grayscale = Filters.filterImage(Filters.grayscale, canvas);
+			
+			var vertical = Filters.convolveFloat32(grayscale,
+			  [ -1, 0, 1,
+				-2, 0, 2,
+				-1, 0, 1 ]);
+			var horizontal = Filters.convolveFloat32(grayscale,
+			  [ -1, -2, -1,
+				 0,  0,  0,
+				 1,  2,  1 ]);
+		
+			// Note that ImageData values are clamped between 0 and 255, so we need
+			// to use a Float32Array for the gradient values because they
+			// range between -255 and 255.
+
+			var final_image = Filters.createImageData(vertical.width, vertical.height);
+
+			for (var i=0; i<final_image.data.length; i+=4) {
+				// make the vertical gradient red
+				var v = Math.abs(vertical.data[i]);
+				var h = Math.abs(horizontal.data[i]);
+
+				final_image.data[i] = h; //v;
+				final_image.data[i+1] = h; //v;
+				final_image.data[i+2] = h; //v;
+				final_image.data[i+3] = 255; //v;
+			}
+
+			context.putImageData(final_image, 0, 0);		
+
+			var invert = Filters.filterImage(Filters.invert, canvas);
+			context.putImageData(invert, 0, 0);		
+
+			var invert = Filters.filterImage(Filters.threshold, canvas, 128);
+			context.putImageData(invert, 0, 0);		
+		
+		});
+	});
+	   
+	   
+	   
+	   
+//---------------------------------------------------------------------------------------------------------------------------------
+
+	//----------------------------------------
+	$("#SobelVertical").on('click', function ()
+	{
+		refreshImage(context, function() {
+
+			var grayscale = Filters.filterImage(Filters.grayscale, canvas);
+			
+			var vertical = Filters.convolveFloat32(grayscale,
+			  [ -1, 0, 1,
+				-2, 0, 2,
+				-1, 0, 1 ]);
+			var horizontal = Filters.convolveFloat32(grayscale,
+			  [ -1, -2, -1,
+				 0,  0,  0,
+				 1,  2,  1 ]);
+
+	//		var imgd = context.getImageData(0, 0, pic_real_width, pic_real_height);
+
+
+			var final_image = Filters.createImageData(vertical.width, vertical.height);
+
+			for (var i=0; i<final_image.data.length; i+=4) {
+				var v = Math.abs(vertical.data[i]);
+				var h = Math.abs(horizontal.data[i]);
+
+				final_image.data[i] = v;
+				final_image.data[i+1] = v;
+				final_image.data[i+2] = v;
+				final_image.data[i+3] = 255;
+			}
+
+			context.putImageData(final_image, 0, 0);		
+
+			var invert = Filters.filterImage(Filters.invert, canvas);
+			context.putImageData(invert, 0, 0);		
+
+			var invert = Filters.filterImage(Filters.threshold, canvas, 128);
+			context.putImageData(invert, 0, 0);		
+			
+			
+			
+			
+			var imgd = context.getImageData(0, 0, pic_real_width, pic_real_height);
+			var pix = imgd.data;
+			
+			for (var i=0; i<HorizontalBars.length; i++)
+			{
+
+				for (var j=HorizontalBars[i].LeftPos-10; j< HorizontalBars[i].LeftPos+HorizontalBars[i].WidthX+10; j++)
+				{
+
+					var BlackDots = 0;
+					var WhiteDots = 0;
+
+					for (var k=HorizontalBars[i].TopPos; k< HorizontalBars[i].TopPos+HorizontalBars[i].HeightX; k++)
+					{
+						var rpix = pix[ (k*4*pic_real_width) + (j*4)  + 0 ];
+						var gpix = pix[ (k*4*pic_real_width) + (j*4)  + 1 ];
+						var bpix = pix[ (k*4*pic_real_width) + (j*4)  + 2 ];
+
+						if ( (rpix==0) && (gpix==0) && (bpix==0) ) { BlackDots++; } else { WhiteDots++; }
+					}
+
+					//found black line
+					if ( (BlackDots>HorizontalBars[i].HeightX*0.95 ) )
+					{
+
+					} else
+					{
+						context.beginPath();
+//						context.globalCompositeOperation = "destination-out";
+//						context.globalAlpha = 1;
+						context.strokeStyle = "rgba(255,255,255,0.7)";
+						context.lineWidth = 1;
+						
+						context.moveTo(j+0.5, HorizontalBars[i].TopPos);
+						context.lineTo(j+0.5, HorizontalBars[i].TopPos+HorizontalBars[i].HeightX);
+						
+						context.closePath();
+
+						context.stroke();
+
+					}
+				}
+			}
+			
+			for (var i=0; i<HorizontalBars.length; i++)
+			{
+				context.beginPath();
+				context.rect(HorizontalBars[i].LeftPos, HorizontalBars[i].TopPos, HorizontalBars[i].WidthX, HorizontalBars[i].HeightX  );
+
+				context.strokeStyle = "rgba(55,65,0,0.6)";
+				context.fillStyle = "rgba(255,165,0,0.3)";
+				context.lineWidth = 1;
+
+				context.fill();
+				context.stroke();
+			}
+			
+			
+		});
+		
+
+	});
+	
+
+	//----------------------------------------
 	$("#FindVertical").on('click', function ()
 	{
-		
+	
 		var imgd = context.getImageData(0, 0, pic_real_width, pic_real_height);
 		var pix = imgd.data;
 
@@ -532,99 +730,4 @@ $(document).ready( function()
 	});
 	
 	
-	
-	
-	
-	
-	$("#SobelHorizontal").on('click', function ()
-	{
-		
-//		var imgd = context.getImageData(0, 0, pic_real_width, pic_real_height);
-		var grayscale = Filters.filterImage(Filters.grayscale, canvas);
-		 
-		
-		// Note that ImageData values are clamped between 0 and 255, so we need
-		// to use a Float32Array for the gradient values because they
-		// range between -255 and 255.
-		var vertical = Filters.convolveFloat32(grayscale,
-		  [ -1, 0, 1,
-			-2, 0, 2,
-			-1, 0, 1 ]);
-		var horizontal = Filters.convolveFloat32(grayscale,
-		  [ -1, -2, -1,
-			 0,  0,  0,
-			 1,  2,  1 ]);
-		
-		var final_image = Filters.createImageData(vertical.width, vertical.height);
-		
-		for (var i=0; i<final_image.data.length; i+=4) {
-			// make the vertical gradient red
-			var v = Math.abs(vertical.data[i]);
-			var h = Math.abs(horizontal.data[i]);
-
-			final_image.data[i] = h; //v;
-			final_image.data[i+1] = h; //v;
-			final_image.data[i+2] = h; //v;
-			final_image.data[i+3] = 255; //v;
-		}
-		
-		context.putImageData(final_image, 0, 0);		
-		
-		var invert = Filters.filterImage(Filters.invert, canvas);
-		context.putImageData(invert, 0, 0);		
-		
-		var invert = Filters.filterImage(Filters.threshold, canvas, 128);
-		context.putImageData(invert, 0, 0);		
-		
-	});
-	   
-	$("#SobelVertical").on('click', function ()
-	{
-		
-//		var imgd = context.getImageData(0, 0, pic_real_width, pic_real_height);
-		var grayscale = Filters.filterImage(Filters.grayscale, canvas);
-		 
-		
-		var vertical = Filters.convolveFloat32(grayscale,
-		  [ -1, 0, 1,
-			-2, 0, 2,
-			-1, 0, 1 ]);
-		var horizontal = Filters.convolveFloat32(grayscale,
-		  [ -1, -2, -1,
-			 0,  0,  0,
-			 1,  2,  1 ]);
-		
-		var final_image = Filters.createImageData(vertical.width, vertical.height);
-		
-		for (var i=0; i<final_image.data.length; i+=4) {
-			var v = Math.abs(vertical.data[i]);
-			var h = Math.abs(horizontal.data[i]);
-
-			final_image.data[i] = v;
-			final_image.data[i+1] = v;
-			final_image.data[i+2] = v;
-			final_image.data[i+3] = 255;
-		
-			/*
-			// make the vertical gradient red
-			final_image.data[i] = v;
-			// make the horizontal gradient green
-			final_image.data[i+1] = h;
-			// and mix in some blue for aesthetics
-			final_image.data[i+2] = (v+h)/4;
-			final_image.data[i+3] = 255; // opaque alpha		
-			*/
-		  
-		}
-		
-		context.putImageData(final_image, 0, 0);		
-		
-		var invert = Filters.filterImage(Filters.invert, canvas);
-		context.putImageData(invert, 0, 0);		
-		
-		var invert = Filters.filterImage(Filters.threshold, canvas, 128);
-		context.putImageData(invert, 0, 0);		
-		
-
-	});
 });
