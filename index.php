@@ -68,7 +68,11 @@ $handle = opendir(dirname(realpath(__FILE__)).'/music-sheet/');
 	<button class="btn btn-primary" id="FindVertical"><i class="icon-user icon-white"></i> Vertical Lines</button>
 	
 	<button class="btn btn-primary" id="SobelHorizontal"><i class="icon-user icon-white"></i>Sobel Horizontal</button>	
-	<button class="btn btn-primary" id="SobelVertical"><i class="icon-user icon-white"></i>Sobel Vertical</button>	
+
+
+	<button class="btn btn-primary" id="ColorHorizontal"><i class="icon-user icon-white"></i>Color Horizontal</button>	
+
+	<button class="btn btn-primary" id="ColorVertical"><i class="icon-user icon-white"></i>Color Vertical</button>	
 	
 
 <div style="width:1500px;">
