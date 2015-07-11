@@ -521,7 +521,6 @@ $(document).ready( function()
 			FindHorizontal();
 			ReduceHorizontal();
 			GroupHorizontal();
-			
 		});
 	});
 
@@ -627,11 +626,7 @@ $(document).ready( function()
 				context.fill();
 				context.stroke();
 			}
-			
-			
 		});
-		
-
 	});
 	
 
